@@ -11,9 +11,19 @@
     "url": "git+https://github.com/acoshift/pikkanode.js.git"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/acoshift/pikkanode.js/issues"
   },
-  "homepage": "https://github.com/acoshift/pikkanode.js#readme"
+  "homepage": "https://github.com/acoshift/pikkanode.js#readme",
+  "dependencies": {
+    "fs-extra": "^6.0.1",
+    "koa": "^2.5.1",
+    "koa-body": "^4.0.3",
+    "koa-ejs": "^4.1.1",
+    "koa-router": "^7.4.0",
+    "koa-static": "^4.0.3",
+    "mysql2": "^1.5.3",
+    "uuid": "^3.2.1"
+  }
 }
