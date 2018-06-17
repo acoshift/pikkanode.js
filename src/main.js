@@ -1,3 +1,4 @@
+const path = require('path')
 const Koa = require('koa')
 const koaBody = require('koa-body')
 const serve = require('koa-static')
@@ -18,6 +19,6 @@ app.use(koaBody({ multipart: true }))
 app.use(require('./route'))
 
 app.use(stripPrefix)
-app.use(serve('public'))
+app.use(serve(path.join(process.cwd(), 'public')))
 
 app.listen(8000)
