@@ -2,7 +2,8 @@ const mysql = require('mysql2/promise')
 
 const pool = mysql.createPool({
 	user: 'root',
-	host: '127.0.0.1',
+	password: 'codecamp',
+	host: '35.240.133.57',
 	database: 'pikkanode'
 })
 
