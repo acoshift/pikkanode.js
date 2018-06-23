@@ -1,4 +1,4 @@
-const { user } = require('../../repository')
+const { user } = require('../../../repository')
 
 const getHandler = (ctx) => {
 	ctx.body = 'sign up get handler'

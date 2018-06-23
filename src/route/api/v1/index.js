@@ -1,8 +1,9 @@
+// api/v1/index.js
 const Router = require('koa-router')
 
 const router = new Router()
 
-router.use(require('./controller'))
-router.use('/api', require('./api'))
+router.use('/auth', require('./auth'))
+router.use('/pikka', require('./pikka'))
 
 module.exports = router.routes()
