@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js",
+    "dev": "nodemon -e js,ejs index.js"
   },
   "repository": {
     "type": "git",
@@ -23,6 +24,7 @@
     "koa-body": "^4.0.3",
     "koa-ejs": "^4.1.1",
     "koa-router": "^7.4.0",
+    "koa-session": "^5.8.1",
     "koa-static": "^4.0.3",
     "mysql2": "^1.5.3",
     "uuid": "^3.2.1"

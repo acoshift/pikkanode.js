@@ -1,0 +1,8 @@
+{
+    "db": {
+        "user": "root",
+        "password": "",
+        "host": "localhost",
+        "database": "pikkanode"
+    }
+}

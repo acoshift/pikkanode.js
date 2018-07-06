@@ -1,5 +1,6 @@
-const { user } = require('../repository')
 const bcrypt = require('bcrypt')
+const { user } = require('../repository')
+const AppError = require('../util/appError')
 
 /**
  * signUp
@@ -9,42 +10,36 @@ const bcrypt = require('bcrypt')
  * @returns {Promise<number>}
  */
 async function signUp (email, password) {
-	if (!email) {
-		throw new Error('email required')
-	}
-	if (!password) {
-		throw new Error('password required')
-	}
-
-	const hashedPassword = await bcrypt.hash(password, 10)
-	return user.register(email, hashedPassword)
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10)
+    const insertId = await user.register(email, hashedPassword)
+    return insertId
+  } catch (err) {
+    if (err.message === 'err_dup_entry') {
+      throw new AppError('email already used', 400)
+    }
+    throw err
+  }
 }
 
 /**
- * signIn
+ * verifyEmailAndPassword
  * verify user email and password
  * @param {string} email
  * @param {string} password
  * @returns {Promise<boolean>}
  */
-async function signIn (email, password) {
-	if (!email) {
-		throw new Error('email required')
-	}
-	if (!password) {
-		throw new Error('password required')
-	}
+async function verifyEmailAndPassword (email, password) {
+  const hashedPassword = await user.getPasswordByEmail(email)
 
-	const hashedPassword = await user.getPasswordByEmail(email)
+  if (!hashedPassword) {
+    throw new AppError('wrong email or password', 400)
+  }
 
-	if (!hashedPassword) {
-		throw new Error('wrong email or password')
-	}
-
-	return bcrypt.compare(password, hashedPassword)
+  return bcrypt.compare(password, hashedPassword)
 }
 
 module.exports = {
-	signUp,
-	signIn
+  signUp,
+  verifyEmailAndPassword
 }

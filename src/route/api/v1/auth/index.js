@@ -1,48 +1,86 @@
 const Router = require('koa-router')
 const auth = require('../../../../service/auth')
+const repo = require('../../../../repository')
 
 const router = new Router()
 
-router.post('/signin', signIn)
-router.post('/signup', signUp)
+router.post('/signin', validateInput, signIn)
+router.post('/signup', validateInput, signUp)
 router.post('/signout', signOut)
 
 module.exports = router.routes()
 
-async function signIn (ctx) {
-	const { email, password } = ctx.request.body
+async function validateInput (ctx, next) {
+  const { email, password } = ctx.request.body
+  if (!email) {
+    ctx.status = 400
+    ctx.body = {
+      error: 'email required'
+    }
+    return
+  }
 
-	try {
-		const ok = await auth.signIn(email, password)
+  if (!password) {
+    ctx.status = 400
+    ctx.body = {
+      error: 'password required'
+    }
+    return
+  }
 
-		if (!ok) {
-			ctx.status = 400
-			ctx.body = {
-				error: 'wrong email or password'
-			}
-			return
-		}
+  if (password.length < 6) {
+    ctx.status = 400
+    ctx.body = {
+      error: 'password too short'
+    }
+    return
+  }
 
-		ctx.body = {}
-	} catch (err) {
-		ctx.status = 400
-		ctx.body = {
-			error: err.message
-		}
-		return
-	}
+  const emailRegex = /^([A-Za-z0-9_\-.+])+@([A-Za-z0-9_\-.])+\.([A-Za-z]{2,})$/
+  if (!emailRegex.test(email)) {
+    ctx.status = 400
+    ctx.body = {
+      error: 'invalid email'
+    }
+    return
+  }
+
+  await next()
 }
 
-function signUp (ctx) {
-	ctx.status = 500
-	ctx.body = {
-		error: 'sign up not implement'
-	}
+async function signIn (ctx) {
+  const { password } = ctx.request.body
+  const email = ctx.request.body.email.toLowerCase()
+
+  try {
+    const ok = await auth.verifyEmailAndPassword(email, password)
+    if (!ok) {
+      ctx.status = 400
+      ctx.body = {
+        error: 'wrong email or password'
+      }
+      return
+    }
+
+    ctx.session.userId = await repo.user.getIdByEmail(email)
+    ctx.body = {}
+  } catch (err) {
+    ctx.throwAppError(err)
+  }
+}
+
+async function signUp (ctx) {
+  const { email, password } = ctx.request.body
+
+  try {
+    const insertId = await auth.signUp(email.toLowerCase(), password)
+    ctx.body = { userId: insertId }
+  } catch (err) {
+    ctx.throwAppError(err)
+  }
 }
 
 function signOut (ctx) {
-	ctx.status = 500
-	ctx.body = {
-		error: 'sign out not implement'
-	}
+  delete ctx.session.userId
+  ctx.body = {}
 }
