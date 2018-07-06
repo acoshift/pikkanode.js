@@ -1,9 +1,11 @@
 const Router = require('koa-router')
+const pictureService = require('../../../../service/picture')
+const { picture } = require('../../../../repository')
 
 const router = new Router()
 
 router.get('/', list)
-router.post('/', create)
+router.post('/', validateInput, create)
 router.get('/:id', get)
 router.post('/:id/comment', createComment)
 router.put('/:id/like', like)
@@ -18,10 +20,50 @@ function list (ctx) {
   }
 }
 
-function create (ctx) {
-  ctx.status = 500
+const allowFileType = {
+  'image/png': true,
+  'image/jpeg': true
+}
+
+async function validateInput (ctx, next) {
+  const { picture } = ctx.request.files
+  const { caption } = ctx.request.body
+
+  if (!caption) {
+    ctx.status = 400
+    ctx.body = { error: 'caption required' }
+    return
+  }
+
+  if (!picture) {
+    ctx.status = 400
+    ctx.body = { error: 'picture required' }
+    return
+  }
+
+  if (!allowFileType[picture.type]) {
+    ctx.status = 400
+    ctx.body = { error: 'file type not allowed' }
+    return
+  }
+
+  await next()
+}
+
+async function create (ctx) {
+  const id = await pictureService.createPikka(
+    ctx.session.userId,
+    ctx.request.body.caption,
+    ctx.request.files.picture.path
+  )
+  const createdAt = await picture.getCreatedAtById(id)
+  if (!createdAt) {
+    ctx.throw()
+  }
+
   ctx.body = {
-    error: 'create not implement'
+    id,
+    createdAt
   }
 }
 

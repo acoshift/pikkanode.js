@@ -3,6 +3,7 @@ const Koa = require('koa')
 const koaBody = require('koa-body')
 const serve = require('koa-static')
 const session = require('koa-session')
+const cors = require('@koa/cors')
 
 const app = new Koa()
 app.keys = ['supersecret']
@@ -55,6 +56,7 @@ const handleError = async (ctx, next) => {
 }
 
 app
+  .use(cors({ credentials: true }))
   .use(session(sessionConfig, app))
   .use(koaBody({ multipart: true }))
   .use(handleError)
