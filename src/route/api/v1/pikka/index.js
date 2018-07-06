@@ -1,22 +1,29 @@
 const Router = require('koa-router')
 const pictureService = require('../../../../service/picture')
-const { picture } = require('../../../../repository')
+const { picture, comment } = require('../../../../repository')
+const { isUser } = require('../../../../middlewares')
+const gcs = require('../../../../service/gcs')
 
 const router = new Router()
 
 router.get('/', list)
-router.post('/', validateInput, create)
-router.get('/:id', get)
-router.post('/:id/comment', createComment)
-router.put('/:id/like', like)
-router.delete('/:id/like', unlike)
+router.post('/', isUser, validateInput, create)
+router.get('/:id', validatePikkaId, get)
+router.post('/:id/comment', isUser, validatePikkaId, createComment)
+router.put('/:id/like', isUser, validatePikkaId, like)
+router.delete('/:id/like', isUser, validatePikkaId, unlike)
 
 module.exports = router.routes()
 
-function list (ctx) {
-  ctx.status = 500
+async function list (ctx) {
+  const list = await picture.list()
   ctx.body = {
-    error: 'list not implement'
+    list: list.map(i => (
+      {
+        ...i,
+        picture: gcs.getUrl(i.id)
+      }
+    ))
   }
 }
 
@@ -67,11 +74,34 @@ async function create (ctx) {
   }
 }
 
-function get (ctx) {
-  ctx.status = 500
-  ctx.body = {
-    error: 'get not implement'
+async function validatePikkaId (ctx, next) {
+  if (!ctx.params.id) {
+    ctx.status = 400
+    ctx.body = {
+      error: 'id required'
+    }
+    return
   }
+
+  await next()
+}
+
+async function get (ctx) {
+  const pikka = await picture.get(ctx.params.id)
+  if (!pikka) {
+    ctx.status = 400
+    ctx.body = {
+      error: 'pikka not found'
+    }
+    return
+  }
+
+  const comments = await comment.findByPictureId(pikka.id)
+
+  pikka.picture = gcs.getUrl(pikka.id)
+  pikka.comments = comments
+
+  ctx.body = pikka
 }
 
 function createComment (ctx) {

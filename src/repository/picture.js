@@ -19,7 +19,32 @@ async function getCreatedAtById (id) {
   return result[0] && result[0].created_at
 }
 
+async function list () {
+  const [result] = await pool.query(`
+    select
+      id, caption, created_by as createdBy, created_at as createdAt,
+      (select count(*) from comments where picture_id = id) as commentCount,
+      (select count(*) from likes where picture_id = id) as likeCount
+    from pictures
+    order by created_at desc
+  `)
+  return result
+}
+
+async function get (id) {
+  const [result] = await pool.query(`
+    select
+      id, caption, created_by as createdBy, created_at as createdAt,
+      (select count(*) from likes where picture_id = id) as likeCount
+    from pictures
+    where id = ?
+  `, [ id ])
+  return result[0]
+}
+
 module.exports = {
   insert,
-  getCreatedAtById
+  getCreatedAtById,
+  list,
+  get
 }
