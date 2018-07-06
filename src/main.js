@@ -46,9 +46,18 @@ app.context.throwAppError = function (err) {
   this.throw()
 }
 
+const handleError = async (ctx, next) => {
+  try {
+    await next()
+  } catch (err) {
+    ctx.throwAppError(err)
+  }
+}
+
 app
   .use(session(sessionConfig, app))
   .use(koaBody({ multipart: true }))
+  .use(handleError)
   .use(require('./route'))
 
   .use(stripPrefix)

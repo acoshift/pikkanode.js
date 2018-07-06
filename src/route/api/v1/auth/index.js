@@ -52,32 +52,24 @@ async function signIn (ctx) {
   const { password } = ctx.request.body
   const email = ctx.request.body.email.toLowerCase()
 
-  try {
-    const ok = await auth.verifyEmailAndPassword(email, password)
-    if (!ok) {
-      ctx.status = 400
-      ctx.body = {
-        error: 'wrong email or password'
-      }
-      return
+  const ok = await auth.verifyEmailAndPassword(email, password)
+  if (!ok) {
+    ctx.status = 400
+    ctx.body = {
+      error: 'wrong email or password'
     }
-
-    ctx.session.userId = await repo.user.getIdByEmail(email)
-    ctx.body = {}
-  } catch (err) {
-    ctx.throwAppError(err)
+    return
   }
+
+  ctx.session.userId = await repo.user.getIdByEmail(email)
+  ctx.body = {}
 }
 
 async function signUp (ctx) {
   const { email, password } = ctx.request.body
 
-  try {
-    const insertId = await auth.signUp(email.toLowerCase(), password)
-    ctx.body = { userId: insertId }
-  } catch (err) {
-    ctx.throwAppError(err)
-  }
+  const insertId = await auth.signUp(email.toLowerCase(), password)
+  ctx.body = { userId: insertId }
 }
 
 function signOut (ctx) {
