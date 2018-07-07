@@ -1,5 +1,6 @@
 const Router = require('koa-router')
 const pictureService = require('../../../../service/picture')
+const commentService = require('../../../../service/comment')
 const { picture, comment } = require('../../../../repository')
 const { isUser } = require('../../../../middlewares')
 const gcs = require('../../../../service/gcs')
@@ -58,11 +59,12 @@ async function validateInput (ctx, next) {
 }
 
 async function create (ctx) {
-  const id = await pictureService.createPikka(
-    ctx.session.userId,
+  const id = await pictureService.create(
     ctx.request.body.caption,
-    ctx.request.files.picture.path
+    ctx.request.files.picture.path,
+    ctx.session.userId
   )
+
   const createdAt = await picture.getCreatedAtById(id)
   if (!createdAt) {
     ctx.throw()
@@ -104,10 +106,26 @@ async function get (ctx) {
   ctx.body = pikka
 }
 
-function createComment (ctx) {
-  ctx.status = 500
+async function createComment (ctx) {
+  const { text } = ctx.request.body
+  const pictureId = ctx.params.id
+  if (!text) {
+    ctx.status = 400
+    ctx.body = {
+      error: 'text required'
+    }
+    return
+  }
+
+  const commentId = await commentService.create(text, pictureId, ctx.session.userId)
+  const createdAt = await comment.getCreatedAtById(commentId)
+  if (!createdAt) {
+    ctx.throw()
+  }
+
   ctx.body = {
-    error: 'createComment not implement'
+    commentId,
+    createdAt
   }
 }
 

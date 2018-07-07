@@ -4,5 +4,10 @@
         "password": "",
         "host": "localhost",
         "database": "pikkanode"
+    },
+    "gcs": {
+        "bucketName": "pikkanode",
+        "dest": "images",
+        "keyFile": "/Users/xion/Projects/pikkanode-a41afe2b6a34.json"
     }
 }
