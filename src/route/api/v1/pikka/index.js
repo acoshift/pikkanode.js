@@ -1,7 +1,7 @@
 const Router = require('koa-router')
 const pictureService = require('../../../../service/picture')
 const commentService = require('../../../../service/comment')
-const { picture, comment } = require('../../../../repository')
+const repo = require('../../../../repository')
 const { isUser } = require('../../../../middlewares')
 const gcs = require('../../../../service/gcs')
 
@@ -10,6 +10,7 @@ const router = new Router()
 router.get('/', list)
 router.post('/', isUser, validateInput, create)
 router.get('/:id', validatePikkaId, get)
+router.delete('/:id', validatePikkaId, remove)
 router.post('/:id/comment', isUser, validatePikkaId, createComment)
 router.put('/:id/like', isUser, validatePikkaId, like)
 router.delete('/:id/like', isUser, validatePikkaId, unlike)
@@ -17,7 +18,7 @@ router.delete('/:id/like', isUser, validatePikkaId, unlike)
 module.exports = router.routes()
 
 async function list (ctx) {
-  const list = await picture.list()
+  const list = await repo.picture.list()
   ctx.body = {
     list: list.map(i => (
       {
@@ -65,7 +66,7 @@ async function create (ctx) {
     ctx.session.userId
   )
 
-  const createdAt = await picture.getCreatedAtById(id)
+  const createdAt = await repo.picture.getCreatedAtById(id)
   if (!createdAt) {
     ctx.throw()
   }
@@ -89,7 +90,7 @@ async function validatePikkaId (ctx, next) {
 }
 
 async function get (ctx) {
-  const pikka = await picture.get(ctx.params.id)
+  const pikka = await repo.picture.get(ctx.params.id)
   if (!pikka) {
     ctx.status = 400
     ctx.body = {
@@ -98,7 +99,7 @@ async function get (ctx) {
     return
   }
 
-  const comments = await comment.findByPictureId(pikka.id)
+  const comments = await repo.comment.findByPictureId(pikka.id)
 
   pikka.picture = gcs.getUrl(pikka.id)
   pikka.comments = comments
@@ -118,7 +119,7 @@ async function createComment (ctx) {
   }
 
   const commentId = await commentService.create(text, pictureId, ctx.session.userId)
-  const createdAt = await comment.getCreatedAtById(commentId)
+  const createdAt = await repo.comment.getCreatedAtById(commentId)
   if (!createdAt) {
     ctx.throw()
   }
@@ -129,16 +130,17 @@ async function createComment (ctx) {
   }
 }
 
-function like (ctx) {
-  ctx.status = 500
-  ctx.body = {
-    error: 'like not implement'
-  }
+async function like (ctx) {
+  await pictureService.like(ctx.session.userId, ctx.params.id)
+  ctx.body = {}
 }
 
-function unlike (ctx) {
-  ctx.status = 500
-  ctx.body = {
-    error: 'unlike not implement'
-  }
+async function unlike (ctx) {
+  await pictureService.unlike(ctx.session.userId, ctx.params.id)
+  ctx.body = {}
+}
+
+async function remove (ctx) {
+  await repo.picture.remove(ctx.params.id)
+  ctx.body = {}
 }

@@ -1,21 +1,21 @@
 const pool = require('../db')
 
-async function insert (id, caption, userId) {
+async function insert (pictureId, caption, userId) {
   await pool.query(`
     insert into pictures
       (id, caption, created_by)
     values
       (?, ?, ?)
-  `, [ id, caption, userId ])
+  `, [ pictureId, caption, userId ])
 }
 
-async function getCreatedAtById (id) {
+async function getCreatedAtById (pictureId) {
   const [result] = await pool.query(`
     select
       created_at
     from pictures
     where id = ?
-  `, [ id ])
+  `, [ pictureId ])
   return result[0] && result[0].created_at
 }
 
@@ -31,28 +31,35 @@ async function list () {
   return result
 }
 
-async function get (id) {
+async function get (pictureId) {
   const [result] = await pool.query(`
     select
       id, caption, created_by as createdBy, created_at as createdAt,
       (select count(*) from likes where picture_id = id) as likeCount
     from pictures
     where id = ?
-  `, [ id ])
+  `, [ pictureId ])
   return result[0]
 }
 
-async function isExists (id) {
+async function isExists (pictureId) {
   const [result] = await pool.query(`
     select exists(select 1 from pictures where id = ? limit 1) as b
-  `, [ id ])
+  `, [ pictureId ])
   return result[0].b === 1
 }
 
+async function remove (pictureId) {
+  await pool.query(`
+    delete from pictures
+    where id = ?
+  `, [ pictureId ])
+}
 module.exports = {
   insert,
   getCreatedAtById,
   list,
   get,
-  isExists
+  isExists,
+  remove
 }

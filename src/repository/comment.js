@@ -10,23 +10,23 @@ async function insert (text, pictureId, userId) {
   return result.insertId
 }
 
-async function findByPictureId (id) {
+async function findByPictureId (pictureId) {
   const [result] = await pool.query(`
     select
       id, text, created_at as createdAt
     from comments
     where picture_id = ?
-  `, [ id ])
+  `, [ pictureId ])
   return result
 }
 
-async function getCreatedAtById (id) {
+async function getCreatedAtById (commentId) {
   const [result] = await pool.query(`
     select
       created_at
     from comments
     where id = ?
-  `, [ id ])
+  `, [ commentId ])
   return result[0] && result[0].created_at
 }
 

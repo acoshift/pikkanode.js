@@ -1,5 +1,5 @@
 const bcrypt = require('bcrypt')
-const { user } = require('../repository')
+const repo = require('../repository')
 const AppError = require('../util/appError')
 
 /**
@@ -12,7 +12,7 @@ const AppError = require('../util/appError')
 async function signUp (email, password) {
   try {
     const hashedPassword = await bcrypt.hash(password, 10)
-    const insertId = await user.register(email, hashedPassword)
+    const insertId = await repo.user.register(email, hashedPassword)
     return insertId
   } catch (err) {
     if (err.message === 'err_dup_entry') {
@@ -30,7 +30,7 @@ async function signUp (email, password) {
  * @returns {Promise<boolean>}
  */
 async function verifyEmailAndPassword (email, password) {
-  const hashedPassword = await user.getPasswordByEmail(email)
+  const hashedPassword = await repo.user.getPasswordByEmail(email)
 
   if (!hashedPassword) {
     throw new AppError('wrong email or password', 400)

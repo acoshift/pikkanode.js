@@ -4,7 +4,6 @@ const path = require('path')
 const { gcs } = require('../../config')
 
 module.exports = (() => {
-  console.log('gcs init')
   const storage = new Storage({
     keyFilename: gcs.keyFile
   })
