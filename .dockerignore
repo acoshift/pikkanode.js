@@ -1,5 +1,6 @@
 node_modules
 *.log
+*.yaml
 .DS_Store
 _config.json
 config.json

@@ -4,24 +4,31 @@ const koaBody = require('koa-body')
 const serve = require('koa-static')
 const session = require('koa-session')
 const cors = require('@koa/cors')
+const redis = require('redis')
+const bluebird = require('bluebird')
+const config = require('../config')
+
+bluebird.promisifyAll(redis)
+const redisClient = redis.createClient(config.redis)
 
 const app = new Koa()
+
 app.keys = ['supersecret']
 
-const sessionStore = {}
 const sessionConfig = {
   key: 'pikkanode:sess',
   maxAge: 1000 * 60 * 60 * 7,
   httpOnly: true,
   store: {
-    get (key, maxAge, { rolling }) {
-      return sessionStore[key]
+    async get (key, maxAge, { rolling }) {
+      const sess = await redisClient.getAsync(key)
+      return JSON.parse(sess)
     },
-    set (key, sess, maxAge, { rolling }) {
-      sessionStore[key] = sess
+    async set (key, sess, maxAge, { rolling }) {
+      await redisClient.setAsync(key, JSON.stringify(sess))
     },
-    destroy (key) {
-      delete sessionStore[key]
+    async destroy (key) {
+      await redisClient.delAsync(key)
     }
   }
 }
@@ -64,5 +71,22 @@ app
 
   .use(stripPrefix)
   .use(serve(path.join(process.cwd(), 'public')))
+  .listen(8080)
 
-  .listen(8000)
+const health = new Koa()
+health.use(ctx => {
+  if (ctx.path === '/healthz') {
+    ctx.body = {}
+    return
+  }
+  ctx.status = 500
+})
+health.listen(18080)
+
+const shutdownEvents = ['SIGINT', 'SIGQUIT', 'SIGTERM', 'SIGHUP', 'SIGSTP']
+shutdownEvents.forEach(event => process.on(event, shutdown))
+function shutdown (code) {
+  redisClient.quit()
+  console.log('[!] Shutdown:', code)
+  process.exit()
+}

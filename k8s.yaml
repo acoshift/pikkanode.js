@@ -1,0 +1,116 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pikkanode
+  labels:
+    app: pikkanode
+data:
+  config.json: |
+    {
+      "db": {
+          "user": "root",
+          "password": "",
+          "host": "",
+          "database": "pikkanode"
+      },
+      "gcs": {
+          "bucketName": "pikkanode",
+          "dest": "images",
+          "keyFile": ""
+      }
+    }
+  keyfile.json: |
+    {
+
+    }
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: pikkanode
+  labels:
+    app: pikkanode
+spec:
+  replicas: 2
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: pikkanode
+  template:
+    metadata:
+      name: pikkanode
+      labels:
+        app: pikkanode
+    spec:
+      containers:
+      - name: pikkanode
+        image: gcr.io/pikkanode/pikkanode
+        ports:
+        - containerPort: 8080
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 18080
+          periodSeconds: 10
+          initialDelaySeconds: 15
+          timeoutSeconds: 3
+          successThreshold: 1
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 18080
+          periodSeconds: 2
+          timeoutSeconds: 2
+          successThreshold: 1
+          failureThreshold: 3
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+          limits:
+            memory: 550Mi
+        volumeMounts:
+        - name: config
+          mountPath: /app/config.json
+          subPath: config.json
+        - name: keyfile
+          mountPath: /app/keyfile.json
+          subPath: keyfile.json
+      volumes:
+      - name: config
+        configMap:
+          name: pikkanode
+      - name: keyfile
+        configMap:
+          name: pikkanode
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 100%
+      maxUnavailable: 0
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: pikkanode
+spec:
+  type: LoadBalancer
+  selector:
+    app: pikkanode
+  ports:
+  - port: 80
+    targetPort: 8080
+---
+kind: PodDisruptionBudget
+apiVersion: policy/v1beta1
+metadata:
+  name: pikkanode
+  labels:
+    app: pikkanode
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: pikkanode
