@@ -6,5 +6,5 @@ RUN npm install --only=production
 FROM gcr.io/distroless/nodejs
 COPY --from=build /app /app
 WORKDIR /app
-EXPOSE 8000
+EXPOSE 8080
 CMD ["index.js"]
