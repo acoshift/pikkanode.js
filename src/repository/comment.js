@@ -11,23 +11,23 @@ async function insert (text, pictureId, userId) {
 }
 
 async function findByPictureId (pictureId) {
-  const [result] = await pool.query(`
+  const [rows] = await pool.query(`
     select
       id, text, created_at as createdAt
     from comments
     where picture_id = ?
   `, [ pictureId ])
-  return result
+  return rows
 }
 
 async function getCreatedAtById (commentId) {
-  const [result] = await pool.query(`
+  const [rows] = await pool.query(`
     select
       created_at
     from comments
     where id = ?
   `, [ commentId ])
-  return result[0] && result[0].created_at
+  return rows[0] && rows[0].created_at
 }
 
 module.exports = {

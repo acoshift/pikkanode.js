@@ -19,21 +19,21 @@ async function register (email, password) {
 }
 
 async function getPasswordByEmail (email) {
-  const [result] = await pool.query(`
+  const [rows] = await pool.query(`
     select password
     from users
     where email = ?
   `, [ email ])
-  return result[0] && result[0].password
+  return rows[0] && rows[0].password
 }
 
 async function getIdByEmail (email) {
-  const [result] = await pool.query(`
+  const [rows] = await pool.query(`
     select id
     from users
     where email = ?
   `, [ email ])
-  return result[0] && result[0].id
+  return rows[0] && rows[0].id
 }
 
 module.exports = {
