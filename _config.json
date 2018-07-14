@@ -6,8 +6,7 @@
         "database": "pikkanode"
     },
     "redis": {
-        "host": "localhost",
-        "port": "6379"
+        "host": "localhost"
     },
     "gcs": {
         "bucketName": "pikkanode",
