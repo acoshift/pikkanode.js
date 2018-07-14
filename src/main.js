@@ -1,16 +1,20 @@
-const path = require('path')
 const Koa = require('koa')
 const koaBody = require('koa-body')
-const serve = require('koa-static')
+// const path = require('path')
+// const serve = require('koa-static')
 const session = require('koa-session')
 const cors = require('@koa/cors')
 const redis = require('redis')
 const bluebird = require('bluebird')
 const config = require('../config')
+const pool = require('./db')
 
 bluebird.promisifyAll(redis)
 const redisClient = redis.createClient(config.redis)
 
+redisClient.on('error', console.error)
+
+let isShutingDown = false
 const app = new Koa()
 
 app.keys = ['supersecret']
@@ -68,25 +72,29 @@ app
   .use(koaBody({ multipart: true }))
   .use(handleError)
   .use(require('./route'))
+  // serve file with GCS so koa-static is no use
+  // .use(stripPrefix)
+  // .use(serve(path.join(process.cwd(), 'public')))
+const server = app.listen(8080)
 
-  .use(stripPrefix)
-  .use(serve(path.join(process.cwd(), 'public')))
-  .listen(8080)
-
-const health = new Koa()
-health.use(ctx => {
-  if (ctx.path === '/healthz') {
-    ctx.body = {}
+new Koa().use(ctx => {
+  if (ctx.path === '/healthz' && !isShutingDown) {
+    ctx.body = ''
     return
   }
   ctx.status = 500
-})
-health.listen(18080)
+  ctx.body = 'not ok'
+}).listen(18080)
+
+async function shutdown (code) {
+  isShutingDown = true
+  console.log(`shuting down server`)
+  server.close(async () => {
+    await Promise.all([redisClient.quitAsync(), pool.end()])
+    console.log(`server stopped by ${code}`)
+    process.exit()
+  })
+}
 
 const shutdownEvents = ['SIGINT', 'SIGQUIT', 'SIGTERM', 'SIGHUP', 'SIGSTP']
-shutdownEvents.forEach(event => process.on(event, shutdown))
-function shutdown (code) {
-  redisClient.quit()
-  console.log('[!] Shutdown:', code)
-  process.exit()
-}
+shutdownEvents.forEach(event => process.on(event, () => shutdown(event)))
