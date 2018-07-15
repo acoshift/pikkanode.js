@@ -62,7 +62,7 @@ async function validateInput (ctx, next) {
 async function create (ctx) {
   const id = await pictureService.create(
     ctx.request.body.caption,
-    ctx.request.files.picture.path,
+    ctx.request.files.picture,
     ctx.session.userId
   )
 

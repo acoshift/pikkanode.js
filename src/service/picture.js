@@ -2,8 +2,17 @@ const repo = require('../repository')
 const AppError = require('../util/appError')
 const gcs = require('./gcs')
 
-async function create (caption, pictureFile, createBy) {
-  const filename = await gcs.upload(pictureFile)
+const allowFileType = {
+  'image/png': true,
+  'image/jpeg': true
+}
+
+async function create (caption, picture, createBy) {
+  if (!allowFileType[picture.type]) {
+    throw new AppError('file type not allow', 400)
+  }
+
+  const filename = await gcs.upload(picture.path)
   await repo.picture.insert(filename, caption, createBy)
   return filename
 }
