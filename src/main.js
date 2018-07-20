@@ -102,7 +102,6 @@ process.on('uncaughtException', async (err) => {
     console.error(err)
     server.close(async () => {
       await Promise.all([redisClient.quitAsync(), pool.end()])
-      console.log(`server stopped by ${code}`)
       process.exit()
     })
   }
