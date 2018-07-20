@@ -10,18 +10,16 @@ const AppError = require('./util/appError')
 
 bluebird.promisifyAll(redis)
 const redisClient = redis.createClient(config.redis)
-
 redisClient.on('error', console.error)
 
 let isShutingDown = false
-const app = new Koa()
 
-app.keys = ['supersecret']
+const app = new Koa()
+app.keys = ['super fucking secret']
 
 const sessionConfig = {
   key: 'pikkanode:sess',
-  maxAge: 1000 * 60 * 60 * 7,
-  httpOnly: true,
+  maxAge: 1000 * 60 * 60 * 24 * 7,
   store: {
     async get (key, maxAge, { rolling }) {
       const sess = await redisClient.getAsync(key)
@@ -66,20 +64,21 @@ app
     }
   }))
   .use(require('./route'))
-  // serve file with GCS so koa-static is no use
-  // .use(stripPrefix)
-  // .use(serve(path.join(process.cwd(), 'public')))
 const server = app.listen(8080)
 
-new Koa().use(ctx => {
+// health check
+const health = new Koa()
+health.use(ctx => {
   if (ctx.path === '/healthz' && !isShutingDown) {
     ctx.body = ''
     return
   }
   ctx.status = 500
   ctx.body = 'not ok'
-}).listen(18080)
+})
+health.listen(18080)
 
+// graceful shutdown
 async function shutdown (code) {
   isShutingDown = true
   console.log(`shuting down server`)

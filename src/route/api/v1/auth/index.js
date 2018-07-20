@@ -73,6 +73,6 @@ async function signUp (ctx) {
 }
 
 function signOut (ctx) {
-  delete ctx.session.userId
+  delete ctx.session
   ctx.body = {}
 }
