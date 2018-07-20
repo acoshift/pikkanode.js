@@ -96,9 +96,14 @@ async function shutdown (code) {
 const shutdownEvents = ['SIGINT', 'SIGQUIT', 'SIGTERM', 'SIGHUP', 'SIGSTP']
 shutdownEvents.forEach(event => process.on(event, () => shutdown(event)))
 
-process.on('uncaughtException', (err) => {
+process.on('uncaughtException', async (err) => {
   // WHAT DA FUCK formidable
   if (err.name !== 'Error [ERR_STREAM_DESTROYED]') {
     console.error(err)
+    server.close(async () => {
+      await Promise.all([redisClient.quitAsync(), pool.end()])
+      console.log(`server stopped by ${code}`)
+      process.exit()
+    })
   }
 })
