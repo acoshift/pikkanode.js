@@ -1,13 +1,12 @@
 const Koa = require('koa')
 const koaBody = require('koa-body')
-// const path = require('path')
-// const serve = require('koa-static')
 const session = require('koa-session')
 const cors = require('@koa/cors')
 const redis = require('redis')
 const bluebird = require('bluebird')
 const config = require('../config')
 const pool = require('./db')
+const AppError = require('./util/appError')
 
 bluebird.promisifyAll(redis)
 const redisClient = redis.createClient(config.redis)
@@ -37,16 +36,6 @@ const sessionConfig = {
   }
 }
 
-const stripPrefix = async (ctx, next) => {
-  if (!ctx.path.startsWith('/-')) {
-    ctx.status = 404
-    return
-  }
-
-  ctx.path = ctx.path.slice(2)
-  await next()
-}
-
 // throwAppError checks app error and return error message to client
 app.context.throwAppError = function (err) {
   if (err && err.name === 'AppError') {
@@ -67,10 +56,15 @@ const handleError = async (ctx, next) => {
 }
 
 app
+  .use(handleError)
   .use(cors({ credentials: true }))
   .use(session(sessionConfig, app))
-  .use(koaBody({ multipart: true }))
-  .use(handleError)
+  .use(koaBody({
+    multipart: true,
+    onError: function (err) {
+      throw new AppError(err.message, 400)
+    }
+  }))
   .use(require('./route'))
   // serve file with GCS so koa-static is no use
   // .use(stripPrefix)
