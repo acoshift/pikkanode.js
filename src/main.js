@@ -41,8 +41,9 @@ app.context.throwAppError = function (err) {
     this.body = { error: err.message }
     return
   }
-  console.error(err.message)
-  this.throw()
+  console.error(err)
+  this.status = 500
+  this.body = 'Internal Server Error'
 }
 
 const handleError = async (ctx, next) => {
