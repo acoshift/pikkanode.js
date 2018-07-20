@@ -60,6 +60,9 @@ app
   .use(session(sessionConfig, app))
   .use(koaBody({
     multipart: true,
+    formidable: {
+      maxFileSize: 4 * 1024 * 1024 // 4MB
+    },
     onError: function (err) {
       throw new AppError(err.message, 400)
     }
@@ -92,3 +95,10 @@ async function shutdown (code) {
 
 const shutdownEvents = ['SIGINT', 'SIGQUIT', 'SIGTERM', 'SIGHUP', 'SIGSTP']
 shutdownEvents.forEach(event => process.on(event, () => shutdown(event)))
+
+process.on('uncaughtException', (err) => {
+  // WHAT DA FUCK formidable
+  if (err.name !== 'Error [ERR_STREAM_DESTROYED]') {
+    console.error(err)
+  }
+})
