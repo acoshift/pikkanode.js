@@ -36,8 +36,18 @@ async function getIdByEmail (email) {
   return rows[0] && rows[0].id
 }
 
+async function getEmailById (userId) {
+  const [rows] = await pool.query(`
+    select email
+    from users
+    where id = ?
+  `, [ userId ])
+  return rows[0] && rows[0].email
+}
+
 module.exports = {
   register,
   getPasswordByEmail,
-  getIdByEmail
+  getIdByEmail,
+  getEmailById
 }
