@@ -43,11 +43,12 @@ async function list (userId) {
 async function get (pictureId, userId) {
   const [rows] = await pool.query(`
     select
-      id, caption, created_by as createdBy, created_at as createdAt,
-      (select count(*) from likes where picture_id = id) as likeCount,
+      p.id, p.caption, u.email as createdBy, p.created_at as createdAt,
+      (select count(*) from likes where picture_id = p.id) as likeCount,
       (select exists(select 1 from likes where picture_id = ? and user_id = ? limit 1)) as liked
-    from pictures
-    where id = ?
+    from pictures p
+    left join users u on u.id = p.created_by
+    where p.id = ?
   `, [ pictureId, userId, pictureId ])
   return rows[0]
 }
