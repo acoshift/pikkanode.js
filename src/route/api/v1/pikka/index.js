@@ -35,6 +35,12 @@ const allowFileType = {
 }
 
 async function validateInput (ctx, next) {
+  if (!ctx.request.files) {
+    ctx.status = 400
+    ctx.body = { error: 'invalid request' }
+    return
+  }
+
   const { picture } = ctx.request.files
   const { caption } = ctx.request.body
 
