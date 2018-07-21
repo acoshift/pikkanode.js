@@ -22,10 +22,10 @@ async function getCreatedAtById (pictureId) {
 async function list () {
   const [rows] = await pool.query(`
     select
-      id, caption, created_by as createdBy, created_at as createdAt,
-      (select count(*) from comments where picture_id = id) as commentCount,
-      (select count(*) from likes where picture_id = id) as likeCount
-    from pictures
+      p.id as id, caption, created_by as createdBy, created_at as createdAt,
+      (select count(*) from comments where picture_id = p.id) as commentCount,
+      (select count(*) from likes where picture_id = p.id) as likeCount
+    from pictures p
     order by created_at desc
   `)
   return rows
