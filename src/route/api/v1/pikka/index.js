@@ -18,7 +18,7 @@ router.delete('/:id/like', isUser, validatePikkaId, unlike)
 module.exports = router.routes()
 
 async function list (ctx) {
-  const list = await repo.picture.list()
+  const list = await repo.picture.list(ctx.session.userId || '')
   ctx.body = {
     list: list.map(i => (
       {
@@ -96,7 +96,7 @@ async function validatePikkaId (ctx, next) {
 }
 
 async function get (ctx) {
-  const pikka = await repo.picture.get(ctx.params.id)
+  const pikka = await repo.picture.get(ctx.params.id, ctx.session.userId || '')
   if (!pikka) {
     ctx.status = 400
     ctx.body = {
@@ -109,6 +109,7 @@ async function get (ctx) {
 
   pikka.picture = gcs.getUrl(pikka.id)
   pikka.comments = comments
+  pikka.liked = (pikka.liked === 1)
 
   ctx.body = pikka
 }
